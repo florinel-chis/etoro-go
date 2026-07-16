@@ -51,8 +51,8 @@ const (
 //
 // Action and Transaction are always required. For open orders exactly one
 // of Symbol or InstrumentID identifies the asset, exactly one of Amount,
-// Units, or Contracts sizes the order, and SettlementType and Leverage are
-// required by the API. OrderType is "mkt" (market) or "mit"
+// Units, or Contracts sizes the order, and SettlementType, Leverage, and
+// OrderType are required by the API. OrderType is "mkt" (market) or "mit"
 // (market-if-touched, which additionally needs TriggerRate). Close orders
 // identify what to close through PositionIDs instead.
 //
@@ -110,8 +110,14 @@ func (r OrderRequest) validate() error {
 	if r.Leverage <= 0 {
 		return errors.New("etoro: open orders require a positive Leverage")
 	}
-	if r.OrderType == OrderTypeMarketIfTouched && r.TriggerRate == nil {
-		return errors.New("etoro: mit orders require TriggerRate")
+	switch r.OrderType {
+	case OrderTypeMarket:
+	case OrderTypeMarketIfTouched:
+		if r.TriggerRate == nil {
+			return errors.New("etoro: mit orders require TriggerRate")
+		}
+	default:
+		return fmt.Errorf("etoro: open orders require OrderType %q or %q", OrderTypeMarket, OrderTypeMarketIfTouched)
 	}
 	return nil
 }
@@ -643,8 +649,12 @@ type ClosedTrade struct {
 	Units             float64   `json:"units"`
 }
 
-// TradingHistory returns closed trades since params.MinDate
-// (GET /api/v1/trading/info/trade/{demo/}history).
+// TradingHistory returns ONE PAGE of closed trades since params.MinDate
+// (GET /api/v1/trading/info/trade/{demo/}history). The endpoint is paged:
+// a single call never returns more than one page (the server's default page
+// size when Page/PageSize are unset), so a period with more trades than one
+// page holds must be walked by incrementing params.Page until a call returns
+// fewer than params.PageSize trades (or none).
 func (c *Client) TradingHistory(ctx context.Context, params TradeHistoryParams) ([]ClosedTrade, error) {
 	if params.MinDate.IsZero() {
 		return nil, errors.New("etoro: trading history requires MinDate")

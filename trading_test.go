@@ -142,6 +142,8 @@ func TestCreateOrderValidation(t *testing.T) {
 		{"no sizing field", OrderRequest{Action: ActionOpen, Transaction: TransactionBuy, Symbol: "AAPL"}},
 		{"two sizing fields", OrderRequest{Action: ActionOpen, Transaction: TransactionBuy, Symbol: "AAPL", Amount: floatPtr(50), Units: floatPtr(2)}},
 		{"mit without trigger rate", OrderRequest{Action: ActionOpen, Transaction: TransactionBuy, Symbol: "AAPL", Amount: floatPtr(50), OrderType: OrderTypeMarketIfTouched}},
+		{"missing order type", OrderRequest{Action: ActionOpen, Transaction: TransactionBuy, Symbol: "AAPL", Amount: floatPtr(50), SettlementType: SettlementCFD, Leverage: 1}},
+		{"unknown order type", OrderRequest{Action: ActionOpen, Transaction: TransactionBuy, Symbol: "AAPL", Amount: floatPtr(50), SettlementType: SettlementCFD, Leverage: 1, OrderType: "limit"}},
 		{"close without positions", OrderRequest{Action: ActionClose, Transaction: TransactionSell}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -163,6 +165,7 @@ func TestCreateOrderAPIError(t *testing.T) {
 		Symbol:         "AAPL",
 		Amount:         floatPtr(50),
 		SettlementType: SettlementCFD,
+		OrderType:      OrderTypeMarket,
 		Leverage:       1,
 	})
 	var apiErr *APIError
@@ -678,6 +681,7 @@ func TestTradingCostEstimate(t *testing.T) {
 				Transaction:    TransactionBuy,
 				InstrumentID:   1001,
 				SettlementType: SettlementCFD,
+				OrderType:      OrderTypeMarket,
 				Leverage:       1,
 				Amount:         floatPtr(50),
 			})
