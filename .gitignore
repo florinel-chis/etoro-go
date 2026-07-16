@@ -1,0 +1,10 @@
+# Credentials
+.env*
+
+# Test and coverage output
+*.out
+coverage*
+*.coverprofile
+
+# Editor droppings
+.DS_Store
