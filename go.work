@@ -1,0 +1,10 @@
+// Workspace so the nested backtestsource module builds and tests against the
+// LOCAL root module instead of the last published version — without it, root
+// regressions are invisible to `go test ./...` under backtestsource/.
+// Consumers are unaffected: go.work only applies inside this checkout.
+go 1.26.5
+
+use (
+	.
+	./backtestsource
+)
